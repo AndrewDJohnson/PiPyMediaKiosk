@@ -3,6 +3,7 @@ sudo sudo apt-get --yes install socat qiv libluajit-5.1 xvkdb xdotool
 sudo rm /usr/share/pixel-wallpaper/*
 git clone https://github.com/AndrewDJohnson/PiPyMediaKiosk.git
 mv PiPyMediaKiosk/* .
+sudo mv pipymediakiosk.png /usr/share/plymouth/themes/pix/splash.png
 cmhod +x runppt.sh
 
 mkdir rpimpv && cd rpimpv
@@ -18,10 +19,12 @@ sudo apt-get --yes -f install
 #Create the startup file for LXDE Pi
 echo #@lxpanel --profile LXDE-pi > .config/lxsession/LXDE-pi/autostart
 echo @pcmanfm -d --profile LXDE > .config/lxsession/LXDE/autostart
-echo @xscreensaver -no-splash >> .config/lxsession/LXDE/autostart
+echo @xset -dpms >> .config/lxsession/LXDE/autostart
 echo #@point-rpi >> .config/lxsession/LXDE-pi/autostart
 echo @xsetroot -solid "#030303" >> .config/lxsession/LXDE/autostart
 echo @sudo python pi-ppt-play.py >> .config/lxsession/LXDE/autostart
+#Update the PCMANFM config file to disable autorun when a USB stick is inserted
+sed  -i "s/\(autorun *= *\).*/\10/" .config/pcmanfm/LXDE/pcmanfm.conf
 
 #Set some paramaters for mpv player
 echo vo=rpi:background=yes > .config/mpv/mpv.conf 

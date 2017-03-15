@@ -12,7 +12,7 @@
 #   qiv - Quick image viewer
 #   mpv video player for playing videos using Pi's hardware acceleration
 #
-# Menu includes simple file management and configuration features but could be customised to do anything.
+# Menu includes simple file management and configuration features - could be customised to do anything.
 #=======================================================
 
 #Import Modules/Libraries which are needed by the Menu Program....
@@ -59,12 +59,9 @@ waiting_for_yes_no=False
 show_running=False
 menu_timeout=30
 
-#Set up some symbolic folder links so that we can pick up any files copied to /media folder on boot partition of card
-os.system("sudo ln -s /boot/media media/Video/bootvideo")
-os.system("sudo ln -s /boot/media media/PPT/bootppt")
-os.system("sudo ln -s /boot/media media/Images/bootimages")
+
 #Move mouse pointer out of the way using xvkbd command
-os.system("xvkbd -text "\x2000 \y2000")
+os.system('xvkbd -text "\x2000 \y2000"')
 
 
 #-----------------------------------------#
@@ -241,7 +238,7 @@ menu_names = (
     "Settings",
     "Delete Files",
     "Set Play Mode",
-    "Quit/Shutdown",
+    "Reboot/Shutdown",
     )
 
 play_modes = (
@@ -323,8 +320,9 @@ def start_show():
           
     #Now we run everything - creating a file before we run and deleting it when we finish, so that
     #we know when the show has finished....
-    cmd_line = "echo temp>show_running.temp && " + cmd_line + " rm show_running.temp &"
+    cmd_line = "echo temp>show_running.temp && " + cmd_line + " sudo rm show_running.temp &"
     os.system (cmd_line)
+    print "Commands: " + cmd_line
         
         
 #This will display the Settings Menu buttons (and modify the appropriate button text based on our current settings)
@@ -378,7 +376,7 @@ def set_slide_delay():
 #This function will copy files off an attached USB stick
 #it assumes the stick will be mounted under the "/media directory - this is the default in Raspbian Jessie
 #from what I could work out, it seems to something associated with PCManFM which does this.
-def copy_files_from_usb():
+def copy_files_from_folder(source_path,delete_source):
     global timeout_label, waiting_for_yes_no
     #Some initial setup
     file_count=0
@@ -386,7 +384,7 @@ def copy_files_from_usb():
     timeout_label.pack()
     abort_copying=""
     #Look in the "media" folder for any devices.
-    for root, dirs, files in os.walk("/media",followlinks=True):
+    for root, dirs, files in os.walk(source_path,followlinks=True):
         #Get the folder we are in.
         folders = []
         path=root
@@ -413,6 +411,10 @@ def copy_files_from_usb():
             #Get the full filename
             filename=os.path.join(root, file)
             
+            #Check if we have found a splash screen...
+            if (fn=="pipymediakiosk.png"):
+                shutil.copy(filename,"/usr/share/plymouth/themes/pix/splash.png")
+                continue
             #Check we have enough free space  for the file
             file_size = os.path.getsize(filename)
             statvfs = os.statvfs('.')
@@ -445,6 +447,8 @@ def copy_files_from_usb():
                     win.update_idletasks()
                     #Do the copying!
                     shutil.copy (filename,dest_dir)
+                    if (delete_source==True):
+                        os.remove(filename)
                 else:
                     #Not enough space so go into a special state...
                     waiting_for_yes_no=True
@@ -460,6 +464,17 @@ def copy_files_from_usb():
     tkMessageBox.showinfo("Finished Copying",str(file_count) + " files copied. ")
     timeout_label.forget()
 
+
+def copy_files_from_usb():
+    copy_files_from_folder("/media",False)
+    waiting_for_yes_no=True
+    #Display a warning message
+    if (tkMessageBox.askyesno("Move Files from Boot?", "Move Media files from Boot Partition?")==True):
+        waiting_for_yes_no=False
+        copy_files_from_folder("/boot/media",True)
+    
+    
+
 #Setup the "Play Mode" menu.
 def set_play_mode():
     #Draw the menu
@@ -471,6 +486,9 @@ def set_play_mode():
     main_menu_object[1].core.config(text=menu_label)
     menu_label="Play Videos="+config.get("Settings","PlayVideos")
     main_menu_object[2].core.config(text=menu_label)
+    menu_label="Audio Ouput ="+config.get("Settings","Audio")
+    main_menu_object[3].core.config(text=menu_label)
+
 
 #Set the "Interactive Show" config item in the menu
 def set_interactive_show():
@@ -497,7 +515,9 @@ def select_files_to_delete():
         file_listbox=build_file_list("./media")
         #If any files were found, display help and then the listbox itself.
         if (file_listbox.size()>0):
-            tkMessageBox.showinfo("Now Select Files","Press Both Directional Buttons to Select A File, Enter to Delete")
+            msg="Press Both Directional Buttons to Select A File, Enter to Delete"
+            tkMessageBox.showinfo("Now Select Files",msg)
+            playmode_label.config(text=msg,foreground="red")
             #We now use different navigation keys.
             unbind_nav_keys()
             #Set the size / width of the listbox
@@ -530,10 +550,22 @@ def set_play_images():
 def set_play_videos():
     set_play_mode_item("PlayVideos")
 
+#Set the audio output
+def set_audio_output():
+    if config.get("Settings","Audio")=="HDMI":
+        config.set("Settings","Audio","Analogue")
+        output_value="1"
+    else:
+        config.set("Settings","Audio","HDMI")
+        output_value="2"
+    os.system("amixer cset numid=3 " + output_value)
+    write_config_file()
+    set_play_mode()
+    
 def quit_shutdown():
         os.system("sudo halt")
 
-def quit_reboot():
+def reboot():
         os.system("sudo reboot")
 
 def exit_prog():
@@ -552,7 +584,7 @@ menu_buttons = [
     #Index 0 - Main Menu
     ["Start",0,start_show],
     ["Settings",SETTINGS_MENU_STATE,settings_menu],
-    ["Copy Files From USB",-1,copy_files_from_usb],
+    ["Copy Files From USB/Boot",-1,copy_files_from_usb],
     ["Delete Files",FILES_MENU_STATE,0],
     ["Quit/Shutdown",QUIT_MENU_STATE,0],
     
@@ -576,11 +608,12 @@ menu_buttons = [
     ["Play PPT=",-1,set_play_ppt],
     ["Play Images=",-1,set_play_images],
     ["Play Videos=",-1,set_play_videos],
+    ["Audio Output",-1,set_audio_output],
     ["Back",5,0],
-    ["",0,0],
+    
     #Index 20 - Quit/Exit menu
-    ["Quit",-1,exit_prog],
     ["Shut Down",-1,quit_shutdown],
+    ["Reboot",-1,reboot],
     ["Back",0,0],
     ["",0,0],
     ["",0,0],    
@@ -642,6 +675,7 @@ def check_config_file():
         config.set('Settings', 'PlayVideos', 'Yes')
         config.set('Settings', 'PlayImages', 'Yes')
         config.set('Settings', 'StartDelay', '30')
+        config.set('Settings', 'Audio', 'HDMI')
 
         write_config_file()
     else:
@@ -863,14 +897,23 @@ spin_box_val = Spinbox(win, from_=1, to=60)
 spin_label = Label(win)
 
 
+#Call the "set audio output" twice - it's "toggle" so it will set it back.
+set_audio_output()
+set_audio_output()
+
+
 #Populate initial menu
 populate_menu (MAIN_MENU_STATE)
 
 #Kick off the timer/timeout now...
 timeout_obj=TimeOut()
 
+
+
 #Set focus on 1st button
 main_menu_object[0].core.focus_set()
+
+
 
 #Carry on running...
 mainloop()
