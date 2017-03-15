@@ -63,6 +63,9 @@ menu_timeout=30
 os.system("sudo ln -s /boot/media media/Video/bootvideo")
 os.system("sudo ln -s /boot/media media/PPT/bootppt")
 os.system("sudo ln -s /boot/media media/Images/bootimages")
+#Move mouse pointer out of the way using xvkbd command
+os.system("xvkbd -text "\x2000 \y2000")
+
 
 #-----------------------------------------#
 #This will be a Timer Object used for 
@@ -189,7 +192,7 @@ if sys.platform == "linux2":
                                 if (show_running):
                                     if (config.get("Settings","Interactive") == "Yes"):
                                         #Execute commands to control mpv video player and image qiv viewer to go to next image etc
-                                        cmd_line = 'xvkbd -window "qiv*" -text " " && echo \'{ "command": ["seek", "-20"] }\'  | socat - /tmp/mpvsocket'
+                                        cmd_line = 'xvkbd -window "qiv*" -text " " && echo \'{ "command": ["seek", "+30"] }\'  | socat - /tmp/mpvsocket'
                                         os.system (cmd_line)
                                 else:
                                     #Else - we just send the "down" key to move the menu selection down.
@@ -207,7 +210,7 @@ if sys.platform == "linux2":
                                 if (show_running): 
                                     if (config.get("Settings","Interactive") == "Yes"):
                                         #Execute commands to control mpv video player and image qiv viewer to go to previous image etc
-                                        cmd_line = 'xvkbd -window "qiv*" -text "\\b" && echo \'{ "command": ["seek", "+30"] }\'  | socat - /tmp/mpvsocket'
+                                        cmd_line = 'xvkbd -window "qiv*" -text "\\b" && echo \'{ "command": ["seek", "-20"] }\'  | socat - /tmp/mpvsocket'
                                         os.system (cmd_line)
                                 else:
                                     #Allow us to select Yes/No options (needs different key code)
@@ -285,7 +288,7 @@ def start_show():
                 #Get a file name...
                 filename=os.path.join(root, file)
                 #Check it's not a leftover....
-                if not file.lower().startswith(".~lock"):
+                if not file.lower().startswith(".~lock") and os.path.isfile(filename):
                     #Check if we are doing an interactive show (user presses buttons to advance)
                     if (config.get("Settings","Interactive") == "Yes"):
                         show_running=True
@@ -305,7 +308,7 @@ def start_show():
             cmd_line = cmd_line + " qiv -f -m -P -s -i -C -d 3600"
         #Scan through any sub-folders of images.
         for root, dirs, files in os.walk("./media/Images",followlinks=True):
-                    cmd_line = cmd_line + " " + root 
+            cmd_line = cmd_line + " " + root 
         
         #Get ready to add on next command...                
         cmd_line = cmd_line + " && "
