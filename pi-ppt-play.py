@@ -320,7 +320,7 @@ def start_show():
           
     #Now we run everything - creating a file before we run and deleting it when we finish, so that
     #we know when the show has finished....
-    cmd_line = "echo temp>show_running.temp && " + cmd_line + " sudo rm show_running.temp &"
+    cmd_line = "echo temp>show_running.temp && " + cmd_line + " && sudo rm show_running.temp &"
     os.system (cmd_line)
     print "Commands: " + cmd_line
         
