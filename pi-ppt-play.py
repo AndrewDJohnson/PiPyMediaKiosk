@@ -298,11 +298,12 @@ def start_show():
     #Are we going to play images?
     if (config.get("Settings","PlayImages") == "Yes"):
         show_running=True
+        cmd_line = cmd_line + "qiv -f -m -P -s -i -C -d " 
         #Set up an appropriate command line for an interactive or non-interactive run
         if (config.get("Settings","Interactive") == "No"):
-            cmd_line ="qiv -f -m -P -s -i -C -d " + slide_delay 
+            cmd_line = cmd_line + slide_delay 
         else:
-            cmd_line = cmd_line + " qiv -f -m -P -s -i -C -d 3600"
+            cmd_line = cmd_line + " 8000"
         #Scan through any sub-folders of images.
         for root, dirs, files in os.walk("./media/Images",followlinks=True):
             cmd_line = cmd_line + " " + root 
