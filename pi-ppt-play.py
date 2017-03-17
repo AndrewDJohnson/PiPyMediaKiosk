@@ -163,17 +163,18 @@ if sys.platform == "linux2":
             def send_quit(self):
                 #We might need to send a "Space" keypress...
                 device.emit_click(uinput.KEY_SPACE)
-                #We use the "echo" command to send another command to a socket which the mpv video player listens on...
-                cmd_line = 'echo \'{ "command": ["quit", "0"] }\'  | sudo socat - /tmp/mpvsocket'
-                
-                #Invoke through command line.
-                os.system (cmd_line)
-                #Now we will use xvkkbd to send key pressess to "qiv" image viewer and LibreOffice Impress - to quit out.
-                cmd_line = 'xvkbd -window "qiv*" -text "\e" ; xvkbd -window "LibreOffice 4.3" -text "\e"'
-  
-                os.system (cmd_line)
+                if (show_running):
+                    #We use the "echo" command to send another command to a socket which the mpv video player listens on...
+                    cmd_line = 'echo \'{ "command": ["quit", "0"] }\'  | sudo socat - /tmp/mpvsocket ; '
+                                    #Invoke through command line.
+                    #os.system (cmd_line)
+                    #Now we will use xvkkbd to send key pressess to "qiv" image viewer and LibreOffice Impress - to quit out.
+                    cmd_line = cmd_line + 'xvkbd -window "qiv*" -text "\e" ; xvkbd -window "LibreOffice 4.3" -text "\e"'
+      
+                    os.system (cmd_line)
+                 
                 #Delay for 1 tenth of a second.
-                sleep (.1)
+                sleep (.2)
                 
             #This method scans the switches and sends different key sequences etc depending on current state.
             def scan_switches (self):
