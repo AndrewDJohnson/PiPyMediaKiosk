@@ -1,11 +1,16 @@
-sudo rm  -f media/PPT/.~*#
+cd /home/pi
+
+sudo rm  -f ./media/PPT/.~*#
 slide_delay=$1
 window_name="LibreOffice*"
 advance_slide="xvkbd -window \"LibreOffice 4.3\" -delay $slide_delay -text \" \""
-echo "Delay = $slide_delay, Window Name=$window_name"
-soffice --nologo --norestore --show "$2" &
+echo "Delay = $slide_delay, Window Name=$window_name, File is $2"
+#soffice --nologo --norestore --show $2 &
+#cmd="soffice --nologo --norestore --show \"$2\" &"
+#echo $cmd
+#bash -c $cmd 
 echo "Waiting for PPT to load in $window_name"
-
+($cmd)
 xvkbd -text "\x2000 \y2000"
 cmd_result="?"
 while [[ ! -z  $cmd_result  ]]

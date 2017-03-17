@@ -10,10 +10,7 @@ sudo dpkg -i *.deb
 sudo apt-get --yes -f install
 
 #Remove uneeded modules to free up about 1.5GB so this would fit on a 4GB card.
-sudo apt-get --yes remove dpkg-dev epiphany-browser bluej greenfoot chromium-browser epiphany-browser-data fakeroot hdparm idle idle-python2.7 idle-python3.4 idle3 info java-common dillo claws-mail libreoffice-base libreoffice-base-core libreoffice-base-drivers libreoffice-calc libreoffice-math libreoffice-writer nodejs nodejs-legacy git-man geany-common libstdc++-4.9-dev g++ g++-4.9 debian-reference-common debian-reference-en gstreamer1.0-omx gstreamer1.0-plugins-base
-
- 
-sudo apt-get --yes remove  ruby1.9.1-examples ruby2.1 rubygems-integration squeak-plugins-scratch squeak-vm supercollider supercollider-common supercollider-ide   supercollider-language supercollider-server supercollider-supernova make man-db minecraft-pi netsurf-common netsurf-gtk omxplayer patch penguinspuzzle perl-modules poppler-data powermgmt-base pulseaudio python-gobject python-pifacecommon python-pifacedigitalio python-serial python-xklavier python3-gi python3-numpy python3-picamera python3-pifacecommon python3-pifacedigital-scratch-handler python3-pifacedigitalio python3-pil python3-serial raspberrypi-artwork raspi-config realvnc-vnc-server realvnc-vnc-viewer rsync rtkit ruby1.9.1 scratch sgml-base smartsim sonic-pi tcl8.5 tk8.5 triggerhappy udisks2 wolfram-engine xml-core xpdf wolfram-engine nodered geany
+sudo apt-get --yes remove dpkg-dev epiphany-browser bluej greenfoot chromium-browser epiphany-browser-data fakeroot hdparm idle idle-python2.7 idle-python3.4 idle3 info java-common dillo claws-mail libreoffice-base libreoffice-base-core libreoffice-base-drivers libreoffice-calc libreoffice-math libreoffice-writer nodejs nodejs-legacy git-man geany-common libstdc++-4.9-dev g++ g++-4.9 debian-reference-common debian-reference-en gstreamer1.0-omx gstreamer1.0-plugins-base ruby1.9.1-examples ruby2.1 rubygems-integration squeak-plugins-scratch squeak-vm supercollider supercollider-common supercollider-ide   supercollider-language supercollider-server supercollider-supernova make man-db minecraft-pi netsurf-common netsurf-gtk omxplayer patch penguinspuzzle perl-modules poppler-data powermgmt-base pulseaudio python-gobject python-pifacecommon python-pifacedigitalio python-serial python-xklavier python3-gi python3-numpy python3-picamera python3-pifacecommon python3-pifacedigital-scratch-handler python3-pifacedigitalio python3-pil python3-serial raspberrypi-artwork raspi-config realvnc-vnc-server realvnc-vnc-viewer rsync rtkit ruby1.9.1 scratch sgml-base smartsim sonic-pi tcl8.5 tk8.5 triggerhappy udisks2 wolfram-engine xml-core xpdf wolfram-engine nodered geany
 
 sudo rm *.deb
 
@@ -26,6 +23,7 @@ cd ~
 echo #@lxpanel --profile LXDE-pi > .config/lxsession/LXDE-pi/autostart
 echo @pcmanfm -d --profile LXDE-pi > .config/lxsession/LXDE-pi/autostart
 echo @xset -dpms >> .config/lxsession/LXDE-pi/autostart
+echo @xset -s >> .config/lxsession/LXDE-pi/autostart
 echo #@point-rpi >> .config/lxsession/LXDE-pi/autostart
 echo @xsetroot -solid "#030303" >> .config/lxsession/LXDE-pi/autostart
 echo @sudo python pi-ppt-play.py >> .config/lxsession/LXDE-pi/autostart
@@ -53,3 +51,4 @@ sudo bash -c "echo \"gpu_mem=128\" >> /boot/config.txt"
 #Delete folders used to build and install the mpv player
 sudo rm -r build
 sudo rm -r rpimpv
+sudo apt-get clean

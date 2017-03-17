@@ -99,6 +99,7 @@ class TimeOut():
         else:
             #Update the timer message..
             if (self.timeout > 0):
+                self.label.pack()
                 self.label.configure(text="Starting in " + str (self.timeout) +" ...")
             else:
                 self.label.configure(text="")
@@ -163,11 +164,13 @@ if sys.platform == "linux2":
                 #We might need to send a "Space" keypress...
                 device.emit_click(uinput.KEY_SPACE)
                 #We use the "echo" command to send another command to a socket which the mpv video player listens on...
-                cmd_line = 'echo \'{ "command": ["quit", "0"] }\'  | socat - /tmp/mpvsocket'
+                cmd_line = 'echo \'{ "command": ["quit", "0"] }\'  | sudo socat - /tmp/mpvsocket'
+                
                 #Invoke through command line.
                 os.system (cmd_line)
                 #Now we will use xvkkbd to send key pressess to "qiv" image viewer and LibreOffice Impress - to quit out.
-                cmd_line = 'xvkbd -window "qiv*" -text "\e" && xvkbd -window "LibreOffice 4.3" -text "\e"'
+                cmd_line = 'xvkbd -window "qiv*" -text "\e" ; xvkbd -window "LibreOffice 4.3" -text "\e"'
+  
                 os.system (cmd_line)
                 #Delay for 1 tenth of a second.
                 sleep (.1)
@@ -176,7 +179,7 @@ if sys.platform == "linux2":
             def scan_switches (self):
                 #We need to look at these globals from the main program...
                 global show_running, waiting_for_yes_no, menu_timeout
-  
+                
                 if GPIO.input(GPIO_RIGHT_NEXT_BUTTON) == GPIO.IN:
                     if GPIO.input(GPIO_LEFT_PREV_BUTTON) == GPIO.IN:
                         self.send_quit()
@@ -184,20 +187,22 @@ if sys.platform == "linux2":
                         #Special state in menu handling.
                         if (waiting_for_yes_no==True):
                                 device.emit_click(uinput.KEY_TAB)
-                                print "Sent TAB button"
+                                #print "Sent TAB button"
                         else:
                                 if (show_running):
                                     if (config.get("Settings","Interactive") == "Yes"):
                                         #Execute commands to control mpv video player and image qiv viewer to go to next image etc
-                                        cmd_line = 'xvkbd -window "qiv*" -text " " && echo \'{ "command": ["seek", "+30"] }\'  | socat - /tmp/mpvsocket'
+                                        cmd_line = 'xvkbd -window "qiv*" -text " " ; echo \'{ "command": ["seek", "+30"] }\'  | socat - /tmp/mpvsocket'
                                         os.system (cmd_line)
+                                       
                                 else:
                                     #Else - we just send the "down" key to move the menu selection down.
                                     device.emit_click(uinput.KEY_DOWN)
 
                 if GPIO.input(GPIO_LEFT_PREV_BUTTON) == GPIO.IN:
                     if GPIO.input(GPIO_RIGHT_NEXT_BUTTON) == GPIO.IN:
-                            self.send_quit()
+                        
+                        self.send_quit()
                     else:
                             #Special state in menu handling.
                             if (waiting_for_yes_no==True):
@@ -207,8 +212,9 @@ if sys.platform == "linux2":
                                 if (show_running): 
                                     if (config.get("Settings","Interactive") == "Yes"):
                                         #Execute commands to control mpv video player and image qiv viewer to go to previous image etc
-                                        cmd_line = 'xvkbd -window "qiv*" -text "\\b" && echo \'{ "command": ["seek", "-20"] }\'  | socat - /tmp/mpvsocket'
+                                        cmd_line = 'xvkbd -window "qiv*" -text "\\b" ; echo \'{ "command": ["seek", "-20"] }\'  | socat - /tmp/mpvsocket'
                                         os.system (cmd_line)
+                                        
                                 else:
                                     #Allow us to select Yes/No options (needs different key code)
                                     device.emit_click(uinput.KEY_UP)
@@ -286,15 +292,25 @@ def start_show():
                 filename=os.path.join(root, file)
                 #Check it's not a leftover....
                 if not file.lower().startswith(".~lock") and os.path.isfile(filename):
+                    #Run Libreoffice in viewing mode
+                    #print "Starting " +  "soffice --nologo --norestore --show '" + filename + "' &"
+                    cmd_line=cmd_line +  "soffice --nologo --norestore --show '" + filename + "'" 
+                    #os.system ( "soffice --nologo --norestore --show '" + filename + "' &")
+                    #os.spawnvp(P_NOWAIT,"soffice --nologo --norestore --show '" + filename + "' &", filename)
+                    #os.spawnvp(0,"soffice", "--nologo --norestore --show '" + filename + "'")
                     #Check if we are doing an interactive show (user presses buttons to advance)
                     if (config.get("Settings","Interactive") == "Yes"):
                         show_running=True
                         #Set up the command line to run Office Impress (from a separate script)
-                        cmd_line = cmd_line + "bash ./runppt.sh " + "0" + ' "' + filename + '" && '
+                        #cmd_line = cmd_line + "./runppt.sh " + "0" + " '" + filename + "'\n"
+                        #cmd_line = cmd_line + "./runppt.sh 0 ;"
+                        cmd_line = cmd_line + "\n"
                     else:
-                        #Non-interactive run - so add the delay value.
-                        cmd_line = "bash ./runppt.sh " + str(int(slide_delay)*1000) + ' "' + filename  + '" && '
+                        #Non-interactive run - so add "run in background" for soffice and the control script.
+                        cmd_line = cmd_line + " &\n./runppt.sh " + str(int(slide_delay)*1000) +  " '" + filename  + "'\n"
+                        #cmd_line = cmd_line + "./runppt.sh " + str(int(slide_delay)*1000) +  " ; "
 
+                    
     #Are we going to play images?
     if (config.get("Settings","PlayImages") == "Yes"):
         show_running=True
@@ -309,7 +325,7 @@ def start_show():
             cmd_line = cmd_line + " " + root 
         
         #Get ready to add on next command...                
-        cmd_line = cmd_line + " && "
+        cmd_line = cmd_line + "\n"
 
     #Are we going to play videos?                                
     if (config.get("Settings","PlayVideos") == "Yes"):
@@ -317,13 +333,17 @@ def start_show():
           #Command line for mpv video player - it will scan subdirectories by itself
           #Additionally, it can listen on a socket for commands - as the process *won't* be attached to a console
           #that we can send keypresses to...
-          cmd_line = cmd_line + "mpv --really-quiet --input-ipc-server=/tmp/mpvsocket ./media/Video/* &&"
+          cmd_line = cmd_line + 'mpv --really-quiet --input-ipc-server=/tmp/mpvsocket ./media/Video/*\n'
           
     #Now we run everything - creating a file before we run and deleting it when we finish, so that
     #we know when the show has finished....
-    cmd_line = "echo temp>show_running.temp && " + cmd_line + " sudo rm show_running.temp &"
-    os.system (cmd_line)
+    cmd_line = 'sudo echo temp>show_running.temp\n' + cmd_line + 'sudo rm show_running.temp\n'
+    os.system ('echo "' + cmd_line + '"> runshow.sh && chmod +x runshow.sh')
+    os.system ("bash ./runshow.sh &")
+    #cmd_line = 'sudo echo temp>show_running.temp ; bash -c "' + cmd_line + ' sudo rm show_running.temp" &'
+    #os.system (cmd_line)
     print "Commands: " + cmd_line
+        
         
         
 #This will display the Settings Menu buttons (and modify the appropriate button text based on our current settings)
@@ -377,7 +397,7 @@ def set_slide_delay():
 #This function will copy files off an attached USB stick
 #it assumes the stick will be mounted under the "/media directory - this is the default in Raspbian Jessie
 #from what I could work out, it seems to something associated with PCManFM which does this.
-def copy_files_from_folder(source_path,delete_source):
+def copy_files_from_folder(source_path,source_name,delete_source):
     global timeout_label, waiting_for_yes_no
     #Some initial setup
     file_count=0
@@ -462,17 +482,15 @@ def copy_files_from_folder(source_path,delete_source):
                 win.update_idletasks()
 
     #Display a message that we have now finished copying...
-    tkMessageBox.showinfo("Finished Copying",str(file_count) + " files copied. ")
+    tkMessageBox.showinfo("Finished Copying",str(file_count) + " files copied from " + source_name +". ")
     timeout_label.forget()
 
 
 def copy_files_from_usb():
-    copy_files_from_folder("/media",False)
+    copy_files_from_folder("/media","USB",False)
     waiting_for_yes_no=True
     #Display a warning message
-    if (tkMessageBox.askyesno("Move Files from Boot?", "Move Media files from Boot Partition?")==True):
-        waiting_for_yes_no=False
-        copy_files_from_folder("/boot/media",True)
+    copy_files_from_folder("/boot/media","Boot Partition",True)
     
     
 
@@ -587,7 +605,7 @@ menu_buttons = [
     ["Settings",SETTINGS_MENU_STATE,settings_menu],
     ["Copy Files From USB/Boot",-1,copy_files_from_usb],
     ["Delete Files",FILES_MENU_STATE,0],
-    ["Quit/Shutdown",QUIT_MENU_STATE,0],
+    ["Shutdown/Reboot",QUIT_MENU_STATE,0],
     
     #Any lines showing ["",0,0] are padding out the menu to "menu size" items.
 
@@ -599,8 +617,8 @@ menu_buttons = [
     ["Back",0,0],
 
     #Index 10 - File delete menu
-    ["Delete All Files",-1,delete_all_files],
     ["Select Files to Delete ",-1,select_files_to_delete],
+    ["Delete All Files",-1,delete_all_files],
     ["Back",0,0],
     ["",0,0],
     ["",0,0],
@@ -717,27 +735,37 @@ def focus_select(event):
     #Check if listbox control generated the event
     if (len (event.widget.config())<30):
         #Hide the listbox.
-        file_listbox.forget()
-        #Set us back to "normal" menu navigation
-        bind_keys()
+        #Go into "wait state"
         #Get the items selected
         selection = file_listbox.curselection()
-        reslist=list()
 
-        #Go into "wait state"
-        waiting_for_yes_no=True
-        #Display a message to confirm file deletion. 
-        if tkMessageBox.askyesno("Delete Files", "Are you sure you want to delete these files?"):
-            #Go through the selection.
-            for i in selection:
-                item = file_listbox.get(i)
-                #Does the file exist?
-                if os.path.isfile (item):
-                    os.remove(item)
-                elif os.path.isdir(item):
-                    shutil.rmtree(item)
+        #Display a message to confirm file deletion if any files selected. 
+        if len (selection)>0:
+            waiting_for_yes_no=True
+            answer=tkMessageBox.askyesnocancel("Delete Files", "Are you sure you want to delete these files?")
+            if answer or answer is None:
+                if answer:
+                    reslist=list()
 
-            waiting_for_yes_no=False
+                    #Go through the selection.
+                    for i in selection:
+                        item = file_listbox.get(i)
+                        #Does the file exist?
+                        if os.path.isfile (item):
+                            os.remove(item)
+                        elif os.path.isdir(item):
+                            shutil.rmtree(item)
+                #Set us back to "normal" menu navigation
+                file_listbox.forget()
+                #waiting_for_yes_no=False
+                bind_keys()
+        else:
+            waiting_for_yes_no=True
+            if not tkMessageBox.askyesno("No files selected...","Would like to select more files?"):
+                file_listbox.forget()
+                bind_keys()
+
+        waiting_for_yes_no=False
 
     #Was it one of the menu buttons created the event?
     elif event.widget.config("text")[0] != "textvariable":
