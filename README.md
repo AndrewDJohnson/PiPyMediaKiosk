@@ -1,37 +1,26 @@
-## Welcome to GitHub Pages
+Raspberry Pi - PiPy Media Kiosk Development
 
-You can use the [editor on GitHub](https://github.com/AndrewDJohnson/PiPyMediaKiosk/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Goals
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+The original goals for this project were
 
-### Markdown
+a)	To produce some kind of automatic PowerPoint player, with additional features
+b)	To teach myself more about Python Programming.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Further, I wanted to experiment with building the simplest kind of input device/keyboard which could be used to drive an on-screen menu. This would mean that you could have a tiny media player in the form of a Raspberry Pi Zero (or Zero-W) with no other hardware needed. It had to work without being Wi-Fi connected, however. 
 
-```markdown
-Syntax highlighted code block
+Possible Uses
 
-# Header 1
-## Header 2
-### Header 3
+The main use will be for “digital signage” –  but I had thought it could be used in shops or for simple interactive slideshows in museum type displays (and you might wire up your own switches rather than use my solution, described below).
 
-- Bulleted
-- List
+It is, at a most basic level, a simple media player, but will play powerpoint files too! So, I decided to develop a Python Programme which
 
-1. Numbered
-2. List
+1)	Had a simple, flexible re-usable menu system
+2)	Would read GPIO inputs so that simple key-switches could be used as the cheapest possible keyboard.
+3)	It would copy all files from a USB stick onto its own card.
 
-**Bold** and _Italic_ and `Code` text
+It had to be able to play videos and also display images. It had to be able to do this automatically or interactively.
 
-[Link](url) and ![Image](src)
-```
+All the required information is in this Blog Post I made:
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/AndrewDJohnson/PiPyMediaKiosk/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+http://halfin-halfout.blogspot.co.uk/2017/03/pipy-media-kiosk-development.html
